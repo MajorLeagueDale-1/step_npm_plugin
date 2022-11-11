@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  step-npm-plugin:
+    container_name: step-npm-plugin
+    image: majorleaguedale/step-npm-plugin:latest
+    restart: always
+    environment:
+      - LOG_LEVEL=INFO
+      - STEP_CA_DOMAIN=ca.example.com               # Step CA Domain Name
+      - STEP_CA_FINGERPRINT=cr3987adeef348c8d89a890 # Step CA Fingerprint
+      - STEP_CA_PROVISIONER_PASS=<MyPassword>       # CA Provisioner password (See DOCKER_STEPCA_INIT_PASSWORD)
+      - NPM_USER=user@example.com                   # User will need to be created in NPM manually
+      - NPM_PASS=<MyPassword>                       # Password for user manually created in NPM
+    networks:
+      - frontend
+
+  ca:
+    image: smallstep/step-ca:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - DOCKER_STEPCA_INIT_NAME=ca
+      - DOCKER_STEPCA_INIT_DNS_NAMES=ca.example.com
+      - DOCKER_STEPCA_INIT_PASSWORD=<MyPassword>
+    restart: always
+    volumes:
+      - "certificates:/home/step"
+    healthcheck:
+     test: ["CMD", "curl", "-f", "-k", "https://localhost:9000/health"]
+     interval: 1m30s
+     timeout: 10s
+     retries: 3
+     start_period: 40s
+    networks:
+      - frontend
+
+  npm-app:
+    container_name: nginx-app
+    image: jc21/nginx-proxy-manager:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    environment:
+      - DB_MYSQL_HOST=npm-db
+      - DB_MYSQL_PORT=3306
+      - DB_MYSQL_USER=npm
+      - DB_MYSQL_PASSWORD=<MyPassword>
+      - DB_MYSQL_NAME=npm
+    volumes:
+      - npm-data:/data
+      - npm-ssl:/etc/letsencrypt
+    networks:
+      frontend:
+      db:
+
+  npm-db:
+    container_name: nginx-db
+    image: jc21/mariadb-aria:latest
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=<MyPassword>
+      - MYSQL_DATABASE=npm
+      - MYSQL_USER=npm
+      - MYSQL_PASSWORD=<MyPassword>
+    volumes:
+      - npm-db:/var/lib/mysql
+    networks:
+      - db
+
+volumes:
+  npm-data:
+  npm-ssl:
+  npm-db:
+  certificates:
+
+networks:
+  frontend:
+  db:

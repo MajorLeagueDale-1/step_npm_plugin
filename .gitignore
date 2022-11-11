@@ -1,0 +1,12 @@
+venv
+
+*.egg-info
+
+dist
+
+.DS_Store
+.idea
+._*
+.vscode
+
+.secrets

@@ -1,0 +1,6 @@
+/venv
+/*.egg-info
+/dist
+/.secrets
+/*.crt
+/*.key
