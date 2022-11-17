@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "step_npm_plugin"
-version = "0.1"
+version = "0.2"
 authors = [
-  { name="Dale Stephenson", email="majorleaguedale@gmail.com" },
+  { name="Dale Stephenson" },
 ]
 description = "Smallstep CA plugin to Nginx Proxy Manager plugin"
 readme = "README.md"

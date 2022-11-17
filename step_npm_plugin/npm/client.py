@@ -57,9 +57,16 @@ class NginxProxyManagerClient:
         r = self.session.post(uri, json=data, timeout=5, **kwargs)
         return self._response_parse(r)
 
+    @retry_handler
     def _put(self, uri: str, data: dict = None, **kwargs):
         logger.debug(f'PUT issued to: {uri}')
         r = self.session.put(uri, json=data, timeout=5, **kwargs)
+        return self._response_parse(r)
+
+    @retry_handler
+    def _delete(self, uri: str, **kwargs):
+        logger.debug(f'DELETE issued to: {uri}')
+        r = self.session.delete(uri, timeout=5, **kwargs)
         return self._response_parse(r)
 
     def login(self) -> None:
@@ -131,6 +138,21 @@ class NginxProxyManagerClient:
         logger.info(f'Certificate {new_cert_id} uploaded successfully.')
 
         return new_cert_id
+
+    def delete_certificate(self, cert_id: int) -> None:
+        """
+        Deletes an old certificate from NPM.
+
+        :param cert_id: Certificate ID in NPM.
+        :return:
+        """
+        delete_url = f"{self.uri}/api/nginx/certificates/{cert_id}"
+
+        cert_delete = self._delete(delete_url)
+
+        logger.info(f'Certificate deleted.')
+
+        return
 
     def update_proxy_host_certificate(self, proxy_host_id: int, certificate_id: int) -> None:
         """

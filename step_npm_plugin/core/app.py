@@ -1,3 +1,4 @@
+import datetime
 import logging
 from logging.config import dictConfig
 import pathlib
@@ -128,10 +129,37 @@ def run(config: settings.AppConfig):
                                 'certificate': cert_id
                             })
 
+                    # Phase 2 - Renew old ones
+                    for cert in certs:
+                        if (cert['expires'] - datetime.timedelta(minutes=10)) > datetime.datetime.now():
+                            logger.info(
+                                f'Certificate {cert.get("primary_domain", None)} expires at'
+                                f' {cert["expires"].strftime("%Y-%m-%d %H:%M:%S")}. Starting renewal.'
+                            )
+
+                            existing_host = next(
+                                (host for host in hosts if host['primary_domain'] == cert['primary_domain']), None
+                            )
+
+                            if existing_host:
+                                crt_key_pair = step_client.create_certificate(
+                                    existing_host['primary_domain'], *existing_host['sans']
+                                )
+                                logger.debug(f'Certificate & Key created in the working directory: {crt_key_pair}')
+
+                                step_cert = StepCertificate.from_file(*crt_key_pair)
+                                npm_client.delete_certificate(cert['id'])
+                                new_cert_id = npm_client.create_certificate(step_cert, existing_host['primary_domain'])
+
+                                mapper.append({
+                                    'proxy_host': existing_host['id'],
+                                    'certificate': new_cert_id
+                                })
+                            else:
+                                logger.info(f'Cert not assigned to a host... skipping.')
+
                     for cert_map in mapper:
                         npm_client.update_proxy_host_certificate(cert_map['proxy_host'], cert_map['certificate'])
-
-                # Phase 2 - Renew old ones (coming soon...)
 
             time.sleep(1)
 
