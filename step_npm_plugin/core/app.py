@@ -1,5 +1,6 @@
 import datetime
 import logging
+import random
 from logging.config import dictConfig
 import pathlib
 import time
@@ -93,16 +94,17 @@ def run(config: settings.AppConfig):
         try:
             if timer.breached:
                 hosts = parse_http_hosts(npm_client.get_proxy_hosts())
+                http_hosts = [host for host in hosts if host['is_https'] is False]
                 certs = parse_certificates(npm_client.get_certificates())
 
                 mapper = []
 
                 # Phase 1 - Add new certificates
-                if len(hosts) > 0:
-                    domains = [host["primary_domain"] for host in hosts]
+                if len(http_hosts) > 0:
+                    domains = [host["primary_domain"] for host in http_hosts]
                     logger.info(f'New hosts found that are currently HTTP Only: {", ".join(domains)}')
 
-                    for host in hosts:
+                    for host in http_hosts:
                         existing_cert = next(
                             (cert for cert in certs if cert['primary_domain'] == host['primary_domain']), None
                         )
@@ -129,34 +131,37 @@ def run(config: settings.AppConfig):
                                 'certificate': cert_id
                             })
 
-                    # Phase 2 - Renew old ones
-                    for cert in certs:
-                        if (cert['expires'] - datetime.timedelta(minutes=10)) > datetime.datetime.now():
-                            logger.info(
-                                f'Certificate {cert.get("primary_domain", None)} expires at'
-                                f' {cert["expires"].strftime("%Y-%m-%d %H:%M:%S")}. Starting renewal.'
+                # Phase 2 - Renew old ones
+                for cert in certs:
+                    rand_jitter = random.randrange(1, 10)
+                    if (cert['expires'] - datetime.timedelta(minutes=rand_jitter)) < datetime.datetime.now():
+                        logger.info(
+                            f'Certificate {cert.get("primary_domain", None)} expires at'
+                            f' {cert["expires"].strftime("%Y-%m-%d %H:%M:%S")}. Starting renewal.'
+                        )
+
+                        existing_host = next(
+                            (host for host in hosts if host['primary_domain'] == cert['primary_domain']), None
+                        )
+                        is_letsencrypt = existing_host.get('certificate', {}).get('provider', None) == 'letsencrypt'
+
+                        if existing_host and not is_letsencrypt:
+                            crt_key_pair = step_client.create_certificate(
+                                existing_host['primary_domain'], *existing_host['sans']
                             )
+                            logger.debug(f'Certificate & Key created in the working directory: {crt_key_pair}')
 
-                            existing_host = next(
-                                (host for host in hosts if host['primary_domain'] == cert['primary_domain']), None
-                            )
+                            step_cert = StepCertificate.from_file(*crt_key_pair)
+                            npm_client.delete_certificate(cert['id'])
+                            new_cert_id = npm_client.create_certificate(step_cert, existing_host['primary_domain'])
 
-                            if existing_host:
-                                crt_key_pair = step_client.create_certificate(
-                                    existing_host['primary_domain'], *existing_host['sans']
-                                )
-                                logger.debug(f'Certificate & Key created in the working directory: {crt_key_pair}')
-
-                                step_cert = StepCertificate.from_file(*crt_key_pair)
-                                npm_client.delete_certificate(cert['id'])
-                                new_cert_id = npm_client.create_certificate(step_cert, existing_host['primary_domain'])
-
-                                mapper.append({
-                                    'proxy_host': existing_host['id'],
-                                    'certificate': new_cert_id
-                                })
-                            else:
-                                logger.info(f'Cert not assigned to a host... skipping.')
+                            mapper.append({
+                                'proxy_host': existing_host['id'],
+                                'certificate': new_cert_id
+                            })
+                        else:
+                            logger.info(f'Cert not assigned to a host, or the host uses a letsencrypt certificate'
+                                        f'... skipping.')
 
                     for cert_map in mapper:
                         npm_client.update_proxy_host_certificate(cert_map['proxy_host'], cert_map['certificate'])

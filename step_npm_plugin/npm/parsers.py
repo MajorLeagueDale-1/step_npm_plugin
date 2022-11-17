@@ -4,14 +4,14 @@ from datetime import datetime
 def parse_http_hosts(data: list):
     hosts = []
     for proxy_host in data:
-        if proxy_host.get('certificate_id', None) == 0:
-            host = {
-                'id': proxy_host.get('id', None),
-                'primary_domain': proxy_host.get('domain_names', [None])[0],
-                'sans': proxy_host.get('domain_names', [None])[1:]
-            }
+        host = {
+            'id': proxy_host.get('id', None),
+            'primary_domain': proxy_host.get('domain_names', [None])[0],
+            'sans': proxy_host.get('domain_names', [None])[1:],
+            'is_https': False if proxy_host.get('certificate_id', 0) == 0 else True
+        }
 
-            hosts.append(host)
+        hosts.append(host)
 
     return hosts
 
