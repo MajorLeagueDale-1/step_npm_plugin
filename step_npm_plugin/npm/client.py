@@ -154,7 +154,7 @@ class NginxProxyManagerClient:
 
         return
 
-    def update_proxy_host_certificate(self, proxy_host_id: int, certificate_id: int) -> None:
+    def update_proxy_host_certificate(self, proxy_host_id: int, certificate_id: int, force: bool = False) -> None:
         """
         Updates a proxy host with a certificate to use.
 
@@ -163,12 +163,13 @@ class NginxProxyManagerClient:
 
         :param int proxy_host_id: ID of the Proxy Host to be updated
         :param int certificate_id: ID of the certificate to be applied to the proxy host
+        :param bool force: If forced, the mapper will reset the certificate regardless of the state of the proxy host
         :return:
         """
         proxy_host_url = f"{self.uri}/api/nginx/proxy-hosts/{proxy_host_id}"
         proxy_host = self._get(proxy_host_url)
 
-        if proxy_host.get('certificate_id', None) != 0:
+        if proxy_host.get('certificate_id', None) != 0 and not force:
             logger.info(f'Recheck of proxy host {proxy_host.get("domain_names", [None])[0]} already has a '
                         f'certificate assigned. Skipping host...')
             return

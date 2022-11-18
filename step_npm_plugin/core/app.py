@@ -114,7 +114,8 @@ def run(config: settings.AppConfig):
                             logger.info(f'Existing certificate for {host["primary_domain"]} already on NPM.')
                             mapper.append({
                                 'proxy_host': host['id'],
-                                'certificate': existing_cert['id']
+                                'certificate': existing_cert['id'],
+                                'force': False
                             })
                         else:
                             # No existing cert, create a new one...
@@ -128,7 +129,8 @@ def run(config: settings.AppConfig):
 
                             mapper.append({
                                 'proxy_host': host['id'],
-                                'certificate': cert_id
+                                'certificate': cert_id,
+                                'force': False
                             })
 
                 # Phase 2 - Renew old ones
@@ -157,14 +159,17 @@ def run(config: settings.AppConfig):
 
                             mapper.append({
                                 'proxy_host': existing_host['id'],
-                                'certificate': new_cert_id
+                                'certificate': new_cert_id,
+                                'force': True
                             })
                         else:
                             logger.info(f'Cert not assigned to a host, or the host uses a letsencrypt certificate'
                                         f'... skipping.')
 
-                    for cert_map in mapper:
-                        npm_client.update_proxy_host_certificate(cert_map['proxy_host'], cert_map['certificate'])
+                for cert_map in mapper:
+                    npm_client.update_proxy_host_certificate(
+                        cert_map['proxy_host'], cert_map['certificate'], cert_map['force']
+                    )
 
             time.sleep(1)
 
