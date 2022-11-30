@@ -15,7 +15,7 @@ version: '3.8'
 services:
   step-npm-plugin:
     container_name: step-npm-plugin
-    image: majorleaguedale/step-npm-plugin:latest
+    image: majorleaguedale1/step-npm-plugin:latest
     restart: always
     environment:
       - LOG_LEVEL=INFO
