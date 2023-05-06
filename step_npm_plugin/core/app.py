@@ -145,6 +145,9 @@ def run(config: settings.AppConfig):
                         existing_host = next(
                             (host for host in hosts if host['primary_domain'] == cert['primary_domain']), None
                         )
+                        if existing_host is None:
+                            logger.debug(f'No matching host found for {cert["primary_domain"]}.')
+                            continue
                         is_letsencrypt = existing_host.get('certificate', {}).get('provider', None) == 'letsencrypt'
 
                         if existing_host and not is_letsencrypt:
