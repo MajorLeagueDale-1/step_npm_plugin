@@ -17,7 +17,7 @@ RUN apk add --update libffi-dev gcc musl-dev python3 python3-dev && mkdir /insta
 COPY --from=builder /build/dist/step_npm_plugin-0.2.2-py3-none-any.whl /install
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python -m pip install /install/step_npm_plugin-0.2.1-py3-none-any.whl
+RUN python -m pip install /install/step_npm_plugin-0.2.2-py3-none-any.whl
 
 
 FROM --platform=${TARGETPLATFORM} smallstep/step-cli:0.22.1-rc16
