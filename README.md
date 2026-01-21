@@ -44,4 +44,5 @@ services:
 | `NPM_PORT`                    | -np         | Nginx Proxy Manager Port Number                                                              | 81                                    | 81      |
 | `NPM_USER`*                   | -nu         | Nginx Proxy Manager Username                                                                 | user@example.com                      | -       |
 | `NPM_PASS`*                   | -npw        | Nginx Proxy Manager Password                                                                 | -                                     | -       |
+| `NPM_PROXY_HOST_GRACE_PERIOD` | -ngp        | Grace Period in seconds before creating a certificate on a proxy host.                       | 10                                    | 10      |
   

@@ -1,14 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def parse_http_hosts(data: list):
     hosts = []
     for proxy_host in data:
+
+        try:
+            created_time = datetime.fromisoformat(proxy_host['created_on']).astimezone(timezone.utc)
+        except ValueError:
+            created_time = None
+
         host = {
             'id': proxy_host.get('id', None),
             'primary_domain': proxy_host.get('domain_names', [None])[0],
             'sans': proxy_host.get('domain_names', [None])[1:],
-            'is_https': False if proxy_host.get('certificate_id', 0) == 0 else True
+            'is_https': False if proxy_host.get('certificate_id', 0) == 0 else True,
+            'created_on': created_time
         }
 
         hosts.append(host)

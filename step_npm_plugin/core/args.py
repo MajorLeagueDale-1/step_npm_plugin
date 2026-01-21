@@ -14,6 +14,7 @@ npm.add_argument('-nh', '--npm-host', type=str)
 npm.add_argument('-np', '--npm-port', type=int)
 npm.add_argument('-nu', '--npm-user', type=str)
 npm.add_argument('-npw', '--npm-pass', type=str)
+npm.add_argument('-ngp', '--npm-proxy-host-grace-period', type=int)
 
 
 step = parser.add_argument_group('Smallstep CA')

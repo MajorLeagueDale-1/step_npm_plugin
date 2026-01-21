@@ -22,6 +22,7 @@ class AppConfig:
     NPM_PORT: int = 81
     NPM_USER: str = None
     NPM_PASS: SecureString = None
+    NPM_PROXY_HOST_GRACE_PERIOD: int = 10
 
     __REQUIRED_ATTRS: list = [
         'STEP_CA_DOMAIN', 'STEP_CA_FINGERPRINT', 'STEP_CA_PROVISIONER_PASS', 'NPM_HOST', 'NPM_USER', 'NPM_PASS'

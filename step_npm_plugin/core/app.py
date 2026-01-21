@@ -6,10 +6,10 @@ import pathlib
 import time
 
 from step_npm_plugin.npm import (
-    NginxProxyManagerClient, GenericNPMError, FailedToLogin, NotLoggedIn, CommunicationError, parse_http_hosts,
+    NginxProxyManagerClient, FailedToLogin, parse_http_hosts,
     parse_certificates
 )
-from step_npm_plugin.step import StepClient, StepCertificate, GenericStepError, NotBootstrapped
+from step_npm_plugin.step import StepClient, StepCertificate
 from step_npm_plugin.schedule import Timer
 
 from . import settings
@@ -94,7 +94,20 @@ def run(config: settings.AppConfig):
         try:
             if timer.breached:
                 hosts = parse_http_hosts(npm_client.get_proxy_hosts())
-                http_hosts = [host for host in hosts if host['is_https'] is False]
+                http_hosts = []
+                for host in hosts:
+                    grace_delta = datetime.timedelta(seconds=config.NPM_PROXY_HOST_GRACE_PERIOD)
+                    grace_expired = host['created_on'] + grace_delta < datetime.datetime.now(datetime.timezone.utc)
+
+                    if host['is_https'] is False and host['created_on'] and grace_expired:
+                        http_hosts.append(host)
+                    elif not grace_expired:
+                        logger.warning(
+                            f"Host {host['primary_domain']} is new and was created on {host['created_on'].isoformat()}."
+                            f" Awaiting grace period of {config.NPM_PROXY_HOST_GRACE_PERIOD} seconds to allow for"
+                            f" LetsEncrypt certificates to apply, in case it was requested."
+                        )
+
                 certs = parse_certificates(npm_client.get_certificates())
 
                 mapper = []
