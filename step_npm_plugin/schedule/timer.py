@@ -21,18 +21,18 @@ class Timer:
 
         time_now = round(time.time())
 
-        if self._sync_to_clock is True:
+        if self._sync_to_clock:
             self._next_run = (time_now + (self._schedule_seconds - (time_now % self._schedule_seconds)))
         else:
             self._next_run = time_now + self._schedule_seconds
 
     @property
     def scheduled(self) -> bool:
-        return bool(self._next_run)
+        return False if self._next_run is None else True
 
     @property
     def breached(self) -> bool:
-        if self.scheduled is False:
+        if self.scheduled is None:
             return False
 
         if self._next_run > round(time.time()):
