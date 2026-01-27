@@ -14,10 +14,10 @@ USER root
 
 RUN apk add --update libffi-dev gcc musl-dev python3 python3-dev && mkdir /install && mkdir -p /opt/venv && python3 -m venv /opt/venv
 
-COPY --from=builder /build/dist/step_npm_plugin-0.3.0-py3-none-any.whl /install
+COPY --from=builder /build/dist/step_npm_plugin-0.3.1-py3-none-any.whl /install
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python -m pip install /install/step_npm_plugin-0.3.0-py3-none-any.whl
+RUN python -m pip install /install/step_npm_plugin-0.3.1-py3-none-any.whl
 
 
 FROM --platform=${TARGETPLATFORM} docker.io/smallstep/step-cli:0.29.0
