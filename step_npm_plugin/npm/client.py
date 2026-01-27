@@ -37,7 +37,7 @@ class NginxProxyManagerClient:
     def _response_parse(r: requests.Response):
         if r.status_code in (200, 201):
             data = r.json()
-        elif r.status_code in (401, 403):
+        elif r.status_code in (400, 401, 403):
             logger.debug('Token has timed out. Need to login and retry.')
             raise NotLoggedIn("Token timed out.")
         else:
